@@ -92,7 +92,10 @@ def inputVar(l:list, vocab:vocabulary):
 def outputVar(l:list, vocab:vocabulary):
     """
     Returns padded target sequence tensor, padding mask and maax target length for loss calculation during training
-    Input:
+    Input: Batches of list of indexes formed from the sentances
+    Output: Padded indexes to maintain max seq len
+            Masked 1 and 0 version of the padded indexes
+            maximum length of any sentance
     """
     indexes_batch = [vocab.indexfromSentance(sentance) for sentance in l]
     max_target_len = max([len(index_array) for index_array in indexes_batch])
@@ -105,7 +108,11 @@ def outputVar(l:list, vocab:vocabulary):
 def batch2traindata(vocab, pair_batch):
     """
     Prepares the data for training for a given batch of pairs
-    Output:
+    Output: 0 - train input padded transposed index arrays
+            1 - tensor of lengths of each sentance
+            2 - targets padded transposed index arrays
+            3 - Masked 1 and 0 of targets transposed index arrays
+            4 - Max length of the sequences
     """
     #Sort the question answers pairs in descending order
     pair_batch.sort(key=lambda x:len(x[0].split(" ")), reverse=True)
