@@ -1,7 +1,8 @@
-import re
-import unicodedata
-
 class vocabulary:
+
+    PAD = 0
+    SOS = 1
+    EOS = 2
 
     def __init__(self, name):
 
@@ -39,25 +40,15 @@ class vocabulary:
         for word in keep_words:
             self.addWord(word)
 
-def unicodetoascii(s):
-
-    return "".join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != "Mn")
-
-def normalizeString(s):
-
-    s = unicodetoascii(s.lower().strip())
-    # Replace any .!? by a whitespace + the charecter --> "!" will be replaced by " !". \1 means the first bracketed group --> [,!?]. r is to not consider
-    # \1 as a charecter (r is to escape backslash)
-    s = re.sub(r"([.!?])", r" \1", s)
-    # Remove any sequence of white space charecters. + means more
-    s = re.sub(r"[^a-zA-Z.!?]+", r" ", s)
-    # Remove any sequence of whitespace charecters
-    s = re.sub(r"\s+", r" ", s).strip()
-
-    return s
+    def indexfromSentance(self, sentance:str) -> list:
+        """
+        Convers a sentance of words into a list of indexes from the corpus
+        """
+        return [self.word2index[word] for word in sentance.split(" ")] + [self.EOS] 
+    
+    def __len__(self):
+        return self.num_words
 
 if __name__ == "__main__":
 
-    s = "aa123aa!s's dd?"
-
-    print(normalizeString(s))
+    pass
