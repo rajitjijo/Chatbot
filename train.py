@@ -133,7 +133,6 @@ def trainIters(model_name:str, vocab:vocabulary, dataloader:torch.utils.data.Dat
 
     print("Finished Training")
 
-
 if __name__ == "__main__":
 
     print("Loading Dataset")
@@ -146,7 +145,7 @@ if __name__ == "__main__":
     print("Dataset Loaded")
 
     #Configure Training Run
-    model_name = "chatbot_1"
+    model_name = "chatbot_2"
     batch_size = 64
     attn_model = "dot" #couldve been "concat" or general
     hidden_size = 512
