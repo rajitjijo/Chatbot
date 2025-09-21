@@ -124,6 +124,25 @@ def batch2traindata(vocab, pair_batch):
     output, mask, max_target_len = outputVar(output_batch, vocab)
     return inp, lengths, output, mask, max_target_len
 
+def get_pairs(datafile:str, vocab:vocabulary, max_length:int=10, min_count:int=3):
+    """
+    Responsible for Setting up vocabulary and returning the pairs of inputs after cleaning
+    """
+
+    lines = open(datafile, encoding="utf-8").read().strip().split("\n\n")
+    pairs = [[normalizeString(s) for s in pair.split("\t")] for pair in lines]
+    
+    pairs = [pair for pair in pairs if filterpair(pair, max_length=max_length)]
+
+    for pair in pairs:
+        vocab.addSentance(pair[0])
+        vocab.addSentance(pair[1])
+
+    pairs = trimRareWords(vocab, pairs, min_count=min_count)
+
+    return pairs, vocab
+
+
 if __name__ == "__main__":
 
     s = "aa123aa!s's dd?"

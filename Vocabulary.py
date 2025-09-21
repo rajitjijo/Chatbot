@@ -44,7 +44,7 @@ class vocabulary:
         """
         Convers a sentance of words into a list of indexes from the corpus
         """
-        return [self.word2index[word] for word in sentance.split(" ")] + [self.EOS] 
+        return [self.word2index[word] for word in sentance.split(" ")] + [self.EOS]
     
     def __len__(self):
         return self.num_words

@@ -14,3 +14,7 @@ def maskNLLLoss(decoder_out, target, mask, device):
     loss = loss.mean()
     loss = loss.to(device)
     return loss, ntotal.item()
+
+
+if __name__ == "__main__":
+    pass

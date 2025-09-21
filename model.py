@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class Encoder(nn.Module):
 
-    def __init__(self, hidden_size, embedding, n_layers = 1, drouput=0):
+    def __init__(self, hidden_size, embedding, n_layers = 1, drouput:float=0):
         super().__init__()
         self.n_layers = n_layers
         self.embedding = embedding
@@ -16,7 +16,7 @@ class Encoder(nn.Module):
     def forward(self, input_seq, input_lengths, hidden=None):
         """
         input_seq: batch of input sentances with shape: (seq_length, batch_size)
-        input_lengths: list of sentance lengths corresponding to each sentance in the batch, so that we can avoid the padded values
+        input_lengths: list of sentance lengths corresponding to each sentance in the batch, so that we can avoid the padded values needed in packing padded sequence
         hidden_state: (n_layers x n_directions, batch_size, hidden_size)\n
         ------X------\n
         outputs: Output features from the last layer of the GRU, for each timestep (sum of biderectional output); shape = (seq_length, batch_size, hidden_size)
