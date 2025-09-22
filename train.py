@@ -42,7 +42,8 @@ def train(input_array, lengths, target_array, target_mask, max_target_len, encod
     decoder_hidden = encoder_hidden[:decoder.n_layers]
 
     #determine if we are using teacher forcing or not
-    use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+    # use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+    use_teacher_forcing = False
 
     if use_teacher_forcing:
         for t in range(max_target_len): 
