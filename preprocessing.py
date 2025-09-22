@@ -32,7 +32,7 @@ def trimRareWords(vocab:vocabulary, pairs:list[list[str]], min_count=3) -> list[
         if keepinput and keepreply:
             keep_pairs.append(pair)
 
-    print(f"After trimming kept {len(keep_pairs)} out of {len(pairs)}")
+    print(f"After trimming kept {len(keep_pairs)} out of {len(pairs)} pairs of conversations.")
     
     return keep_pairs
 
