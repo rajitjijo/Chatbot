@@ -9,14 +9,13 @@ from dataset import ChatDataset
 from model import *
 
 def train(input_array, lengths, target_array, target_mask, max_target_len, encoder, decoder, embedding,
-          encoder_optimizer:torch.optim.Optimizer, decoder_optimizer:torch.optim.Optimizer, batch_size,
+          optimizer:torch.optim.Optimizer, batch_size,
           clip, max_length, teacher_forcing_ratio, device):
     
     SOS = 1 #start of sentance token
     
     #zero gradients
-    encoder_optimizer.zero_grad()
-    decoder_optimizer.zero_grad()
+    optimizer.zero_grad()
 
     #set device options
     input_array = input_array.to(device)
@@ -76,15 +75,14 @@ def train(input_array, lengths, target_array, target_mask, max_target_len, encod
     _ = torch.nn.utils.clip_grad_norm_(decoder.parameters(), clip)
 
     #Adjust model weights
-    encoder_optimizer.step()
-    decoder_optimizer.step()
+    optimizer.step()
 
     return sum(iter_loss) / total_items
 
 
-def trainIters(model_name:str, vocab:vocabulary, dataloader:torch.utils.data.DataLoader, encoder, decoder,
-               encoder_optimizer, decoder_optimizer, embedding, save_dir, n_epochs, batch_size,
-               device, clip, teacher_forcing_ratio, max_seq_length):
+def trainIters(model_name:str, vocab:vocabulary, dataloader:torch.utils.data.DataLoader, 
+               encoder, decoder, schedular, optimizer, embedding, save_dir, 
+               n_epochs, batch_size, device, clip, teacher_forcing_ratio, max_seq_length):
     
     print(" Starting Training....")
     
@@ -111,11 +109,14 @@ def trainIters(model_name:str, vocab:vocabulary, dataloader:torch.utils.data.Dat
 
             input_array, lengths, target_array, target_mask, max_target_len = batch
             batch_loss = train(input_array, lengths, target_array, target_mask, max_target_len, encoder, decoder, embedding,
-                               encoder_optimizer, decoder_optimizer, batch_size, clip, max_seq_length, teacher_forcing_ratio, device)
+                               optimizer, batch_size, clip, max_seq_length, teacher_forcing_ratio, device)
             
             epoch_loss = epoch_loss + batch_loss
             
             print(f"[{epoch}/{n_epochs}]:: Current Batch: ({index+1}/{num_batches}), Loss: {batch_loss}")
+
+            if schedular:
+                schedular.step()
 
         epoch_loss = epoch_loss / num_batches
 
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     print("Loading Dataset")
     datafile = "data/formatted_movie_lines.txt"
     #set up vocab object
-    vocab = vocabulary("Cornell_Movie_Diaglogues")
+    vocab = vocabulary("Cornell_Movie_Dialogues")
     #build dataset
     pairs, vocab = get_pairs(datafile, vocab)
     chatdata = ChatDataset(pairs)
@@ -152,13 +153,14 @@ if __name__ == "__main__":
     encoder_n_layers = 2
     decoder_n_layers = 2
     dropout = 0.1
-    n_epochs = 10
+    n_epochs = 50
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     max_seq_length = 11
     clip = 50.0
     teacher_forcing_ratio = 1.0
-    learning_rate = 0.0001
-    decoder_learning_ratio = 5.0
+    learning_rate = 0.001
+    weight_decay = 0.01
+    max_lr = 0.005
 
     print(f"""
             Configured Training Run:
@@ -175,7 +177,8 @@ if __name__ == "__main__":
             Gradient Clip:         {clip}
             Teacher Forcing Ratio: {teacher_forcing_ratio}
             Learning Rate:         {learning_rate}
-            Decoder LR Ratio:      {decoder_learning_ratio}
+            Weight Decay:          {weight_decay}
+            Max Learning Rate:     {max_lr}
             """)
 
     #make the dataloader object
@@ -194,14 +197,33 @@ if __name__ == "__main__":
     decoder.train()
 
     #Initialize Optimizers
-    encoder_optimizer = torch.optim.Adam(encoder.parameters(), learning_rate)
-    decoder_optimizer = torch.optim.Adam(decoder.parameters(), learning_rate*decoder_learning_ratio)
+    optimizer = torch.optim.AdamW(list(encoder.parameters())+list(decoder.parameters()),lr=learning_rate,weight_decay=weight_decay)
+    # encoder_optimizer = torch.optim.Adam(encoder.parameters(), learning_rate)
+    # decoder_optimizer = torch.optim.Adam(decoder.parameters(), learning_rate*decoder_learning_ratio)
+
+    #Initialize LR Schedular
+    schedular = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=max_lr, 
+                                                    steps_per_epoch=len(dataloader), 
+                                                    epochs=n_epochs, 
+                                                    pct_start=0.3, 
+                                                    anneal_strategy="cos")
 
     #Running Main Training Loop
-    trainIters(model_name=model_name,vocab=vocab,dataloader=dataloader,encoder=encoder,
-               decoder=decoder,encoder_optimizer=encoder_optimizer,decoder_optimizer=decoder_optimizer,
-               embedding=embedding,save_dir="training_runs",n_epochs=n_epochs,batch_size=batch_size,device=device,clip=clip,
-               teacher_forcing_ratio=teacher_forcing_ratio,max_seq_length=max_seq_length)
+    trainIters(model_name=model_name,
+               vocab=vocab,
+               dataloader=dataloader,
+               encoder=encoder,
+               decoder=decoder,
+               optimizer=optimizer,
+               embedding=embedding,
+               save_dir="training_runs",
+               n_epochs=n_epochs,
+               batch_size=batch_size,
+               device=device,
+               clip=clip,
+               teacher_forcing_ratio=teacher_forcing_ratio,
+               max_seq_length=max_seq_length,
+               schedular=schedular)
     
 
 
